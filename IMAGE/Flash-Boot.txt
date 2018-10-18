@@ -1,0 +1,61 @@
+./omap_mkimage zImage rootfs.cpio.gz "mtdparts=omap2-nand.0:512K(Pbootloader),8M(Pmain_boot),8M(Pfactory),32M(Psystem),81408K(Pupdate) console=ttyO3,115200 loglevel=4 g_serial.use_acm=0 g_serial.idVendor=0x19cf g_serial.idProduct=0x1000 g_serial.iManufacturer=\"Parrot SA\" parrot_force_usbd parrot_installer" installer.fastboot
+
+sudo ./omapflasher x-load.bin installer.fastboot /void
+
+Une fois connecté, la commande suivante devrait donner la sortie ci-dessous :
+Commande :	ps -A
+Sortie :
+PID   USER     TIME   COMMAND
+    1 root       0:02 init
+    2 root       0:00 [kthreadd]
+    3 root       0:00 [ksoftirqd/0]
+    4 root       0:00 [watchdog/0]
+    5 root       0:00 [events/0]
+    6 root       0:00 [khelper]
+   10 root       0:00 [async/mgr]
+   13 root       0:00 [suspend]
+  188 root       0:00 [sync_supers]
+  190 root       0:00 [bdi-default]
+  192 root       0:00 [kblockd/0]
+  200 root       0:00 [omap2_mcspi]
+  207 root       0:00 [ksuspend_usbd]
+  212 root       0:00 [khubd]
+  215 root       0:00 [kseriod]
+  224 root       0:00 [twl4030-irqchip]
+  225 root       0:00 [twl4030-irq]
+  238 root       0:00 [kmmcd]
+  255 root       0:00 [rpciod/0]
+  270 root       0:00 [mboxd/0]
+  275 root       0:00 [khungtaskd]
+  276 root       0:00 [kswapd0]
+  278 root       0:00 [aio/0]
+  279 root       0:00 [nfsiod]
+  280 root       0:00 [crypto/0]
+  418 root       0:00 [mtdblockd]
+  463 root       0:00 [bridge_rec_queu]
+  464 root       0:00 [dsp-mmu_wq/0]
+  468 root       0:00 [kondemand/0]
+  478 root       0:00 [usbhid_resumer]
+  481 root       0:00 [binder]
+  524 root       0:43 /sbin/syslogd -m 0
+  526 root       0:00 /sbin/klogd
+  541 root       1:05 /lib/udev/udevd --daemon
+  545 root       0:00 /lib/udev/udevd --daemon
+  546 root       0:00 /lib/udev/udevd --daemon
+  548 root       0:00 /lib/udev/udevd --daemon
+  550 root       0:00 /lib/udev/udevd --daemon
+  552 root       0:00 /lib/udev/udevd --daemon
+  692 root       0:01 [ttygrab]
+  693 root       0:00 [navdata]
+  709 root       0:00 [AR6K Async]
+  728 root       0:00 /usr/sbin/dropbear
+  749 root       0:00 init
+  750 root       0:00 /bin/sh -l
+  751 root       0:00 /sbin/klogd -n
+  759 root       0:00 [ksdioirqd/mmc1]
+  808 root       0:00 telnetd -l /bin/sh
+  812 root       0:00 udhcpd /tmp/udhcpd.conf
+  818 root       0:04 /usr/sbin/dropbear
+  819 root       0:00 -sh
+  825 root       0:00 ps -A
+
