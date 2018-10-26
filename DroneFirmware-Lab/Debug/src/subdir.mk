@@ -32,14 +32,14 @@ C_DEPS += \
 src/Attitude.o: ../src/Attitude.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross GCC Compiler'
-	arm-none-linux-gnueabi-gcc -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/src" -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/include" -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/include" -O0 -g3 -Wall -c -fmessage-length=0 -pthread -lm -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"src/Attitude.d" -o "$@" "$<"
+	arm-none-linux-gnueabi-gcc -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/src" -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/include" -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/include" -O0 -g3 -Wall -c -fmessage-length=0 -pthread -lm -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"src/Attitude.d" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 src/%.o: ../src/%.c
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross GCC Compiler'
-	arm-none-linux-gnueabi-gcc -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/include" -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/src" -I"/home/ens/AM98710/ELE674/Lab3-firmware/DroneFirmware-Lab/include" -O0 -g3 -Wall -c -fmessage-length=0 -pthread -lm -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
+	arm-none-linux-gnueabi-gcc -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/include" -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/src" -I"/home/ens/AM98800/ele674nobug/DroneFirmware-Lab/include" -O0 -g3 -Wall -c -fmessage-length=0 -pthread -lm -lrt -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

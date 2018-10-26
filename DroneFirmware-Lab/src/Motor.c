@@ -114,10 +114,41 @@ int MotorPortInit(MotorStruct *Motor) {
 
 void motor_send(MotorStruct *Motor, int SendMode) {
 /* Fonction utilitaire pour simplifier les transmissions aux moteurs */
+	uint16_t	temp_pwm[4]={0};
+	uint16_t	temp_led[4];
+	uint8_t 	cmd[5]={0};
+
 
 	switch (SendMode) {
-	case MOTOR_NONE : 		break;
+	case MOTOR_NONE :
+		pthread_spin_lock(&(Motor->MotorLock));
+		write(Motor->file,cmd,5);
+		pthread_spin_unlock(&(Motor->MotorLock));
+						break;
 	case MOTOR_PWM_ONLY :	/* A faire! */
+
+		pthread_spin_lock(&(Motor->MotorLock));
+		temp_pwm[0]=Motor->pwm[0];
+		temp_pwm[1]=Motor->pwm[1];
+		temp_pwm[2]=Motor->pwm[2];
+		temp_pwm[3]=Motor->pwm[3];
+
+		temp_led[0]=Motor->led[0];
+		temp_led[1]=Motor->led[1];
+		temp_led[2]=Motor->led[2];
+		temp_led[3]=Motor->led[3];
+		pthread_spin_unlock(&(Motor->MotorLock));
+		//parsing data for motor
+		cmd[0]=0x20 | ((temp_pwm[0]&0x1ff)>>4);
+		cmd[1]=((temp_pwm[0]&0x1ff)<<4) | ((temp_pwm[1]&0x1ff)>>5);
+		cmd[2]=((temp_pwm[1]&0x1ff)<<3) | ((temp_pwm[2]&0x1ff)>>6);
+		cmd[3]=((temp_pwm[2]&0x1ff)<<2) | ((temp_pwm[3]&0x1ff)>>7);
+		cmd[4]=((temp_pwm[3]&0x1ff)<<1) ;
+
+		pthread_spin_lock(&(Motor->MotorLock));
+		write(Motor->file,cmd,5);
+		pthread_spin_unlock(&(Motor->MotorLock));
+
 							break;
 	case MOTOR_LED_ONLY :	/* A faire! */
 							break;
@@ -131,14 +162,22 @@ void *MotorTask ( void *ptr ) {
 /* A faire! */
 /* Tache qui transmet les nouvelles valeurs de vitesse */
 /* à chaque moteur à interval régulier (5 ms).         */
+//	printf("%s ça démarre !!!\n", __FUNCTION__);
+
+	pthread_barrier_wait(&MotorStartBarrier);
 	while (MotorActivated) {
 //		DOSOMETHING();
+		//sem_wait(&MotorTimerSem); // chaque 5ms
+		motor_send(ptr,MOTOR_PWM_ONLY);
+		// parsing data for led
+
 	}
 	pthread_exit(0); /* exit thread */
 }
 
 
 int MotorInit (MotorStruct *Motor) {
+int retval = 0;
 /* A faire! */
 /* Ici, vous devriez faire l'initialisation des moteurs.   */
 /* C'est-à-dire initialiser le Port des moteurs avec la    */
@@ -146,27 +185,41 @@ int MotorInit (MotorStruct *Motor) {
 /* qui va s'occuper des mises à jours des moteurs en cours */ 
 /* d'exécution.
  Creer la tache moter (pthread etc...)                                            */
+	retval = pthread_barrier_init(&MotorStartBarrier,NULL,2);
 	MotorPortInit(Motor);
-	pthread_create(Motor->MotorThread, NULL, MotorTask, Motor);
+	retval = pthread_create(&(Motor->MotorThread), NULL, MotorTask, Motor);
 	return 0;
 }
 
 
 
 int MotorStart (void) {
+	int retval = 0;
 /* A faire! */
 /* Ici, vous devriez démarrer la mise à jour des moteurs (MotorTask).    */ 
 /* Tout le système devrait être prêt à faire leur travail et il ne reste */
 /* plus qu'à tout démarrer.
- Utilisation de barriere                                            */
-	//return retval;
+ Utilisation de barriere
+                                          */
+	MotorActivated = 1;
+	retval = pthread_barrier_wait(&MotorStartBarrier);
+	pthread_barrier_destroy(&MotorStartBarrier);
+
+	return 0;
 }
 
 
 
 int MotorStop (MotorStruct *Motor) {
 /* A faire! */
-/* Ici, vous devriez arrêter les moteurs et fermer le Port des moteurs. */ 
+/* Ici, vous devriez arrêter les moteurs et fermer le Port des moteurs. */
+	MotorActivated = 0;
+
+	motor_send(Motor,MOTOR_NONE);
+	pthread_spin_destroy(&(Motor->MotorLock));
+	sem_destroy(&MotorTimerSem);
+	pthread_join(Motor->MotorThread, 0);
+	//
 	return 0;
 }
 
