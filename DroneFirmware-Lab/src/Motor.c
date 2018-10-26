@@ -15,6 +15,7 @@ extern int		MotorActivated;
 
 pthread_barrier_t 	MotorStartBarrier;
 
+
 int gpio_set (int nr, int val)  {
 	char cmdline[200];
 
@@ -143,7 +144,10 @@ int MotorInit (MotorStruct *Motor) {
 /* C'est-à-dire initialiser le Port des moteurs avec la    */
 /* fonction MotorPortInit() et créer la Tâche MotorTask()  */
 /* qui va s'occuper des mises à jours des moteurs en cours */ 
-/* d'exécution.                                            */
+/* d'exécution.
+ Creer la tache moter (pthread etc...)                                            */
+	MotorPortInit(Motor);
+	pthread_create(Motor->MotorThread, NULL, MotorTask, Motor);
 	return 0;
 }
 
@@ -153,8 +157,9 @@ int MotorStart (void) {
 /* A faire! */
 /* Ici, vous devriez démarrer la mise à jour des moteurs (MotorTask).    */ 
 /* Tout le système devrait être prêt à faire leur travail et il ne reste */
-/* plus qu'à tout démarrer.                                              */
-//	return retval;
+/* plus qu'à tout démarrer.
+ Utilisation de barriere                                            */
+	//return retval;
 }
 
 

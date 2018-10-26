@@ -66,14 +66,15 @@ void SigTimerHandler (int signo) {
 /* pour l'ensemble des Tâches du système.                                                       */
 /* Vous avez un exemple ci-dessous de comment utiliser ceci pour le Main et pour Mavlink.       */
 /* Il vous faudra ajouter ce qui convient pour les autres Tâches du système, selon les besoins. */
-	if (MavlinkActivated) {
+/*	if (MavlinkActivated) {
 		if ((Period % MAVLINK_RECEIVE_PERIOD) == 0)
 			sem_post(&MavlinkReceiveTimerSem);
 		if ((Period % MAVLINK_STATUS_PERIOD) == 0)
 			sem_post(&MavlinkStatusTimerSem);
-	}
+	}*/
 	if ((Period % MAIN_PERIOD) == 0)
 		sem_post (&MainTimerSem);
+		sem_post (&MotorTimerSem);
 	Period = (Period + 1) % MAX_PERIOD;
 }
 
@@ -188,7 +189,7 @@ int main(int argc, char *argv[]) {
 
 	if ((retval = MotorInit(&Motor)) < 0)
 		return EXIT_FAILURE;
-	if ((retval = SensorsLogsInit(SensorTab)) < 0)
+/*	if ((retval = SensorsLogsInit(SensorTab)) < 0)
 		return EXIT_FAILURE;
 	if ((retval = SensorsInit(SensorTab)) < 0)
 		return EXIT_FAILURE;
@@ -198,20 +199,20 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	if ((retval = ControlInit(&Control)) < 0)
 		return EXIT_FAILURE;
-
+*/
 	printf("%s Tout initialisé\n", __FUNCTION__);
 
 	StartTimer();
 
 	MotorStart();
-	SensorsStart();
+/*	SensorsStart();
 	AttitudeStart();
 
 	SensorsLogsStart();
 
 	MavlinkStart();
 	ControlStart();
-
+*/
 	printf("%s Tout démarré\n", __FUNCTION__);
 
 	ch = 0;
@@ -220,17 +221,17 @@ int main(int argc, char *argv[]) {
 		ch = tolower(getchar_nonblock());
 	}
 
-	MavlinkStop(&Mavlink);
+//	MavlinkStop(&Mavlink);
 	pthread_spin_destroy(&(AttitudeDesire.AttitudeLock));
 	pthread_spin_destroy(&(AttitudeMesure.AttitudeLock));
 
-	ControlStop(&Control);
+//	ControlStop(&Control);
 
 	MotorStop(&Motor);
-	SensorsLogsStop(SensorTab);
+/*	SensorsLogsStop(SensorTab);
 	SensorsStop(SensorTab);
 	AttitudeStop(AttitudeTab);
-
+*/
 	StopTimer();
 
 	printf("%s Tout arrêté\n", __FUNCTION__);

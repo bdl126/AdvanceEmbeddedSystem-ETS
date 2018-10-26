@@ -49,7 +49,7 @@ typedef struct motor_struct {
 	uint16_t	led[4];
 	int			file;
 	pthread_t 	MotorThread;
-	pthread_spinlock_t 	MotorLock;
+	pthread_spinlock_t 	MotorLock;//protege l'acces a la structure
 } MotorStruct;
 
 int MotorInit (MotorStruct *Motor);
