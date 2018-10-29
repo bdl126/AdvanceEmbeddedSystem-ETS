@@ -27,6 +27,7 @@ void *SensorTask ( void *ptr ) {
 /* A faire! */
 /* Tache qui sera instancié pour chaque sensor. Elle s'occupe d'aller */
 /* chercher les donnees du sensor.                                    */
+	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
 //		DOSOMETHING();
 	}
@@ -40,6 +41,14 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 /* C'est-à-dire de faire les initialisations requises, telles que    */
 /* ouvrir les fichiers des capteurs, et de créer les Tâches qui vont */
 /* s'occuper de réceptionner les échantillons des capteurs.          */
+	int retval=0;
+	int i =0;
+	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
+	SensorsLogsInit(SensorTab);
+	for(i=0;i<NUM_SENSOR;i++){
+		retval = pthread_create(&(SensorTab[i]->SensorThread), NULL, SensorTask, SensorTab[i]);
+	}
+
 	return 0;
 };
 
@@ -49,6 +58,11 @@ int SensorsStart (void) {
 /* Ici, vous devriez démarrer l'acquisition sur les capteurs.        */ 
 /* Les capteurs ainsi que tout le reste du système devrait être      */
 /* prêt à faire leur travail et il ne reste plus qu'à tout démarrer. */
+	SensorsActivated=1;
+	pthread_barrier_wait(&SensorStartBarrier);
+	SensorsLogsStart();
+	pthread_barrier_destroy(&MotorStartBarrier);
+
 	return 0;
 }
 
@@ -57,6 +71,12 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 /* A faire! */
 /* Ici, vous devriez défaire ce que vous avez fait comme travail dans */
 /* SensorsInit() (toujours verifier les retours de chaque call)...    */ 
+	int i =0;
+	SensorsActivated=0;
+	SensorsLogsStop();
+	for(i=0;i<NUM_SENSOR;i++){
+			pthread_join(SensorTab[i]->SensorThread, 0);
+		}
 	return 0;
 }
 
