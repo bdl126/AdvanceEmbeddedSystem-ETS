@@ -27,9 +27,44 @@ void *SensorTask ( void *ptr ) {
 /* A faire! */
 /* Tache qui sera instancié pour chaque sensor. Elle s'occupe d'aller */
 /* chercher les donnees du sensor.                                    */
+	int i =0;
+	SensorStruct * ptr2=NULL;
+	SensorRawData LocalRawData;
+	int File;
+	ptr2=ptr;
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
-//		DOSOMETHING();
+		pthread_spin_lock(&(ptr2->DataLock));
+		ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
+		File=ptr2->File;
+		pthread_spin_unlock(&(ptr2->DataLock));
+
+		if(read(File,&LocalRawData,sizeof(LocalRawData))==sizeof(LocalRawData)){
+			pthread_mutex_lock(&(ptr2->DataSampleMutex));
+			if(LocalRawData.status == NEW_SAMPLE){
+
+				for(i=0;i<2;i++){
+					ptr2->Data->Data[i] = ((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion);
+				}
+				ptr2->Data->TimeDelay = (LocalRawData.timestamp_s)-(LocalRawData.timestamp_n);
+				memcpy((void *) &(ptr2->RawData), (void *) &LocalRawData, sizeof(SensorRawData));
+
+			}
+			else if(LocalRawData.status==OLD_SAMPLE){
+				printf("that's some old stuff son! ");
+			}
+			else {
+				printf("you done messed up A-Aron");
+			}
+			pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
+			pthread_mutex_unlock(&(ptr2->DataSampleMutex));
+		}
+		else {
+			//La structure n'a pas ete copier en entier
+		}
+
+
+
 	}
 	pthread_exit(0); /* exit thread */
 }
@@ -46,7 +81,11 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
 	SensorsLogsInit(SensorTab);
 	for(i=0;i<NUM_SENSOR;i++){
-		retval = pthread_create(&(SensorTab[i]->SensorThread), NULL, SensorTask, SensorTab[i]);
+		SensorTab[i].File=open(SensorTab[i].DevName,O_RDONLY);
+		retval = pthread_spin_init(&(SensorTab[i].DataLock),PTHREAD_PROCESS_SHARED);
+		retval = pthread_mutex_init(&(SensorTab[i].DataSampleMutex),NULL);
+		retval = pthread_cond_init(&(SensorTab[i].DataNewSampleCondVar),NULL);
+		retval = pthread_create(&(SensorTab[i].SensorThread), NULL, SensorTask, &SensorTab[i]);
 	}
 
 	return 0;
@@ -61,7 +100,7 @@ int SensorsStart (void) {
 	SensorsActivated=1;
 	pthread_barrier_wait(&SensorStartBarrier);
 	SensorsLogsStart();
-	pthread_barrier_destroy(&MotorStartBarrier);
+	pthread_barrier_destroy(&SensorStartBarrier);
 
 	return 0;
 }
@@ -73,9 +112,13 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 /* SensorsInit() (toujours verifier les retours de chaque call)...    */ 
 	int i =0;
 	SensorsActivated=0;
-	SensorsLogsStop();
+	SensorsLogsStop(SensorTab);
 	for(i=0;i<NUM_SENSOR;i++){
-			pthread_join(SensorTab[i]->SensorThread, 0);
+			close(SensorTab[i].File);
+			pthread_spin_destroy(&(SensorTab[i].DataLock));
+			pthread_mutex_destroy(&(SensorTab[i].DataSampleMutex));
+			pthread_cond_destroy(&(SensorTab[i].DataNewSampleCondVar));
+			pthread_join(SensorTab[i].SensorThread, 0);
 		}
 	return 0;
 }

@@ -72,7 +72,7 @@ typedef struct Sensor_struct {
 	int					File;
 	uint16_t			type;
 	pthread_spinlock_t 	DataLock;
-	sem_t				DataSem;
+	//sem_t				DataSem;
 	pthread_mutex_t 	DataSampleMutex;
 	pthread_cond_t  	DataNewSampleCondVar;
 	pthread_t 			SensorThread;
