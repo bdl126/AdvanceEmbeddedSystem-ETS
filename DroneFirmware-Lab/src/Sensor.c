@@ -28,10 +28,13 @@ void *SensorTask ( void *ptr ) {
 /* Tache qui sera instancié pour chaque sensor. Elle s'occupe d'aller */
 /* chercher les donnees du sensor.                                    */
 	int i =0;
-	SensorStruct * ptr2=NULL;
+	SensorStruct * ptr2=(SensorStruct *)ptr;
 	SensorRawData LocalRawData;
 	int File;
-	ptr2=ptr;
+	struct sched_param	param;
+	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
+	param.sched_priority = sched_get_priority_min(POLICY);
+	pthread_setschedparam(pthread_self(), POLICY, &param);
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
 		pthread_spin_lock(&(ptr2->DataLock));
@@ -43,11 +46,12 @@ void *SensorTask ( void *ptr ) {
 			pthread_mutex_lock(&(ptr2->DataSampleMutex));
 			if(LocalRawData.status == NEW_SAMPLE){
 
-				for(i=0;i<2;i++){
-					ptr2->Data->Data[i] = ((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion);
+				for(i=0;i<3;i++){
+					ptr2->Data->Data[i] = (double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion));
 				}
-				ptr2->Data->TimeDelay = (LocalRawData.timestamp_s)-(LocalRawData.timestamp_n);
+				ptr2->Data->TimeDelay = (uint32_t)((LocalRawData.timestamp_s)-(LocalRawData.timestamp_n));
 				memcpy((void *) &(ptr2->RawData), (void *) &LocalRawData, sizeof(SensorRawData));
+				pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
 
 			}
 			else if(LocalRawData.status==OLD_SAMPLE){
@@ -56,7 +60,6 @@ void *SensorTask ( void *ptr ) {
 			else {
 				printf("you done messed up A-Aron");
 			}
-			pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
 			pthread_mutex_unlock(&(ptr2->DataSampleMutex));
 		}
 		else {
@@ -79,7 +82,6 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 	int retval=0;
 	int i =0;
 	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
-	SensorsLogsInit(SensorTab);
 	for(i=0;i<NUM_SENSOR;i++){
 		SensorTab[i].File=open(SensorTab[i].DevName,O_RDONLY);
 		retval = pthread_spin_init(&(SensorTab[i].DataLock),PTHREAD_PROCESS_SHARED);
@@ -87,6 +89,7 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 		retval = pthread_cond_init(&(SensorTab[i].DataNewSampleCondVar),NULL);
 		retval = pthread_create(&(SensorTab[i].SensorThread), NULL, SensorTask, &SensorTab[i]);
 	}
+	printf("%s ça démarre !!!\n", __FUNCTION__);
 
 	return 0;
 };
@@ -98,9 +101,9 @@ int SensorsStart (void) {
 /* Les capteurs ainsi que tout le reste du système devrait être      */
 /* prêt à faire leur travail et il ne reste plus qu'à tout démarrer. */
 	SensorsActivated=1;
+	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
 	pthread_barrier_wait(&SensorStartBarrier);
-	SensorsLogsStart();
-	pthread_barrier_destroy(&SensorStartBarrier);
+	printf("%s 2 ça démarre !!!\n", __FUNCTION__);
 
 	return 0;
 }
@@ -112,7 +115,7 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 /* SensorsInit() (toujours verifier les retours de chaque call)...    */ 
 	int i =0;
 	SensorsActivated=0;
-	SensorsLogsStop(SensorTab);
+	pthread_barrier_destroy(&SensorStartBarrier);
 	for(i=0;i<NUM_SENSOR;i++){
 			close(SensorTab[i].File);
 			pthread_spin_destroy(&(SensorTab[i].DataLock));
@@ -219,7 +222,7 @@ int InitSensorLog (SensorStruct *Sensor) {
 int SensorsLogsInit (SensorStruct SensorTab[]) {
 	int16_t	  i, numLog = 0;
 	int16_t	  retval = 0;
-
+	printf("%s 1 ça démarre !!!\n", __FUNCTION__);
 	for (i = 0; i < NUM_SENSOR; i++) {
 		if (SensorTab[i].DoLog == 1) {
 			if ((retval = InitSensorLog(&SensorTab[i])) < 0) {
@@ -231,7 +234,7 @@ int SensorsLogsInit (SensorStruct SensorTab[]) {
 	}
 	pthread_barrier_init(&LogStartBarrier, NULL, numLog+1);
 	pthread_mutex_init(&Log_Mutex, NULL);
-
+	printf("%s 2 ça démarre !!!\n", __FUNCTION__);
 	return 0;
 };
 

@@ -139,7 +139,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "ACCELEROMETRE (m/s^2)", \
 					 .File 		= -1, \
 					 .type 		= ACCELEROMETRE, \
-					 .DoLog     = 0, \
+					 .DoLog     = 1, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[ACCELEROMETRE], \
 					 .RawData	= &(RawData[ACCELEROMETRE][0]), \
@@ -150,7 +150,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "GYROSCOPE", \
 					 .File 		= -1, \
 					 .type 		= GYROSCOPE, \
-					 .DoLog     = 0, \
+					 .DoLog     = 1, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[GYROSCOPE], \
 					 .RawData	= &(RawData[GYROSCOPE][0]), \
@@ -161,7 +161,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "SONAR", \
 					 .File 		= -1, \
 					 .type 		= SONAR, \
-					 .DoLog     = 0, \
+					 .DoLog     = 1, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[SONAR], \
 					 .RawData	= &(RawData[SONAR][0]), \
@@ -182,7 +182,7 @@ typedef struct Sensor_struct {
 					   .Name 	 = "MAGNETOMETRE", \
 					   .File 	 = -1, \
 					   .type 	 = MAGNETOMETRE, \
-					   .DoLog    = 0, \
+					   .DoLog    = 1, \
 					   .DataIdx  = 0, \
 					   .Param	 = &ParamData[MAGNETOMETRE], \
 					   .RawData	 = &(RawData[MAGNETOMETRE][0]), \

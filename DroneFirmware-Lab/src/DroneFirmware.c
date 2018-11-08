@@ -188,13 +188,13 @@ int main(int argc, char *argv[]) {
 		return -1; /* exit thread */
 	}
 
-	if ((retval = MotorInit(&Motor)) < 0)
+/*	if ((retval = MotorInit(&Motor)) < 0)
 		return EXIT_FAILURE;
-/*	if ((retval = SensorsLogsInit(SensorTab)) < 0)
-		return EXIT_FAILURE;
+	if ((retval = SensorsLogsInit(SensorTab)) < 0)
+		return EXIT_FAILURE;*/
 	if ((retval = SensorsInit(SensorTab)) < 0)
 		return EXIT_FAILURE;
-	if ((retval = AttitudeInit(AttitudeTab)) < 0)
+/*	if ((retval = AttitudeInit(AttitudeTab)) < 0)
 		return EXIT_FAILURE;
 	if ((retval = MavlinkInit(&Mavlink, &AttitudeDesire, &AttitudeMesure, IPAddress)) < 0)
 		return EXIT_FAILURE;
@@ -205,13 +205,13 @@ int main(int argc, char *argv[]) {
 
 	StartTimer();
 
-	MotorStart();
-/*	SensorsStart();
-	AttitudeStart();
+//	MotorStart();
+	SensorsStart();
+//	AttitudeStart();
 
-	SensorsLogsStart();
+//	SensorsLogsStart();
 
-	MavlinkStart();
+/*	MavlinkStart();
 	ControlStart();
 */
 	printf("%s Tout démarré\n", __FUNCTION__);
@@ -228,11 +228,11 @@ int main(int argc, char *argv[]) {
 
 //	ControlStop(&Control);
 
-	MotorStop(&Motor);
-/*	SensorsLogsStop(SensorTab);
+	//MotorStop(&Motor);
+//	SensorsLogsStop(SensorTab);
 	SensorsStop(SensorTab);
-	AttitudeStop(AttitudeTab);
-*/
+//	AttitudeStop(AttitudeTab);
+
 	StopTimer();
 
 	printf("%s Tout arrêté\n", __FUNCTION__);
