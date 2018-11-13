@@ -10,7 +10,7 @@
 #define ABS(x) (((x) < 0.0) ? -(x) : (x))
 
 
-#define MAX_TOT_SAMPLE 1000
+#define MAX_TOT_SAMPLE 100
 
 extern SensorStruct	SensorTab[NUM_SENSOR];
 
@@ -30,15 +30,14 @@ void *SensorTask ( void *ptr ) {
 	int i =0;
 	SensorStruct * ptr2=(SensorStruct *)ptr;
 	SensorRawData LocalRawData;
+	int LocalIdx=0;
 	int File;
-	struct sched_param	param;
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
-	param.sched_priority = sched_get_priority_min(POLICY);
-	pthread_setschedparam(pthread_self(), POLICY, &param);
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
 		pthread_spin_lock(&(ptr2->DataLock));
 		ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
+		LocalIdx = (int)(ptr2->DataIdx);
 		File=ptr2->File;
 		pthread_spin_unlock(&(ptr2->DataLock));
 
@@ -47,19 +46,22 @@ void *SensorTask ( void *ptr ) {
 			if(LocalRawData.status == NEW_SAMPLE){
 
 				for(i=0;i<3;i++){
-					ptr2->Data->Data[i] = (double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion));
+					ptr2->Data[LocalIdx].Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-				ptr2->Data->TimeDelay = (uint32_t)((LocalRawData.timestamp_s)-(LocalRawData.timestamp_n));
-				memcpy((void *) &(ptr2->RawData), (void *) &LocalRawData, sizeof(SensorRawData));
-				pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
+				//i=0;
+				ptr2->Data[LocalIdx].TimeDelay = (uint32_t)((LocalRawData.timestamp_s)-(LocalRawData.timestamp_n));
+	//			i=0;
+				memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
 
 			}
 			else if(LocalRawData.status==OLD_SAMPLE){
-				printf("that's some old stuff son! ");
+				printf("%s that's some old stuff son! ",  __FUNCTION__);
 			}
 			else {
-				printf("you done messed up A-Aron");
+				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
+				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
+			pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
 			pthread_mutex_unlock(&(ptr2->DataSampleMutex));
 		}
 		else {
@@ -69,6 +71,7 @@ void *SensorTask ( void *ptr ) {
 
 
 	}
+	printf("%s EXIT:! %s",  __FUNCTION__,ptr2->Name);
 	pthread_exit(0); /* exit thread */
 }
 
@@ -81,14 +84,29 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 /* s'occuper de réceptionner les échantillons des capteurs.          */
 	int retval=0;
 	int i =0;
+	pthread_attr_t		attr;
+	struct sched_param	param;
+
+
+	pthread_attr_init(&attr);
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setschedpolicy(&attr, POLICY);
+	param.sched_priority = sched_get_priority_min(POLICY);
+	pthread_attr_setstacksize(&attr, THREADSTACK);
+	pthread_attr_setschedparam(&attr, &param);
+
+
 	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
 	for(i=0;i<NUM_SENSOR;i++){
 		SensorTab[i].File=open(SensorTab[i].DevName,O_RDONLY);
 		retval = pthread_spin_init(&(SensorTab[i].DataLock),PTHREAD_PROCESS_SHARED);
 		retval = pthread_mutex_init(&(SensorTab[i].DataSampleMutex),NULL);
 		retval = pthread_cond_init(&(SensorTab[i].DataNewSampleCondVar),NULL);
-		retval = pthread_create(&(SensorTab[i].SensorThread), NULL, SensorTask, &SensorTab[i]);
+		retval = pthread_create(&(SensorTab[i].SensorThread), &attr, SensorTask, &SensorTab[i]);
 	}
+	pthread_attr_destroy(&attr);
 	printf("%s ça démarre !!!\n", __FUNCTION__);
 
 	return 0;
@@ -116,13 +134,15 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 	int i =0;
 	SensorsActivated=0;
 	pthread_barrier_destroy(&SensorStartBarrier);
+	printf("%s pthread_gon_stawp !!!\n", __FUNCTION__);
 	for(i=0;i<NUM_SENSOR;i++){
+			pthread_join(SensorTab[i].SensorThread, NULL);
 			close(SensorTab[i].File);
 			pthread_spin_destroy(&(SensorTab[i].DataLock));
 			pthread_mutex_destroy(&(SensorTab[i].DataSampleMutex));
 			pthread_cond_destroy(&(SensorTab[i].DataNewSampleCondVar));
-			pthread_join(SensorTab[i].SensorThread, 0);
-		}
+	}
+	printf("%s pthread_stawp !!!\n", __FUNCTION__);
 	return 0;
 }
 
@@ -168,7 +188,7 @@ void *SensorLogTask ( void *ptr ) {
 			printf("Sensor  :     TimeStamp      SampleDelay  Status  SampleNum   Raw Sample Data  =>        Converted Sample Data               Norme\n");
 		else switch (tpRaw.type) {
 				case ACCELEROMETRE :	norm = sqrt(tpNav.Data[0]*tpNav.Data[0]+tpNav.Data[1]*tpNav.Data[1]+tpNav.Data[2]*tpNav.Data[2]);
-										printf("Accel   : (%5u.%09d)-(0.%09u)  %2d     %8u   %04X  %04X  %04X  =>  %10.5lf  %10.5lf  %10.5lf  =  %10.5lf\n", tpRaw.timestamp_s, tpRaw.timestamp_n, tpNav.TimeDelay, tpRaw.status, tpRaw.ech_num, (uint16_t) tpRaw.data[0], (uint16_t) tpRaw.data[1], (uint16_t) tpRaw.data[2], tpNav.Data[0], tpNav.Data[1], tpNav.Data[2], norm);
+										printf("Accel   : (%5u.%09d)-(  0.%09u)  %2d     %8u   %04X  %04X  %04X  =>  %10.5lf  %10.5lf  %10.5lf  =  %10.5lf\n", tpRaw.timestamp_s, tpRaw.timestamp_n, tpNav.TimeDelay, tpRaw.status, tpRaw.ech_num, (uint16_t) tpRaw.data[0], (uint16_t) tpRaw.data[1], (uint16_t) tpRaw.data[2], tpNav.Data[0], tpNav.Data[1], tpNav.Data[2], norm);
 										break;
 				case GYROSCOPE :		norm = sqrt(tpNav.Data[0]*tpNav.Data[0]+tpNav.Data[1]*tpNav.Data[1]+tpNav.Data[2]*tpNav.Data[2]);
 										printf("Gyro    : (%5u.%09d)-(0.%09u)  %2d     %8u   %04X  %04X  %04X  =>  %10.5lf  %10.5lf  %10.5lf  =  %10.5lf\n", tpRaw.timestamp_s, tpRaw.timestamp_n, tpNav.TimeDelay, tpRaw.status, tpRaw.ech_num, (uint16_t) tpRaw.data[0], (uint16_t) tpRaw.data[1], (uint16_t) tpRaw.data[2], tpNav.Data[0], tpNav.Data[1], tpNav.Data[2], norm);
