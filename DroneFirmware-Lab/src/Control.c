@@ -238,6 +238,23 @@ int ControlInit (ControlStruct *Control) {
 /* de créer la Tâche ControlTask() qui va faire calculer      */
 /* les nouvelles vitesses des moteurs, basé sur l'attitude    */
 /* désirée du drone et son attitude actuelle (voir capteurs). */
+	int retval=0;
+	pthread_attr_t		attr;
+	struct sched_param	param;
+
+	pthread_attr_init(&attr);
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setschedpolicy(&attr, POLICY);
+	param.sched_priority = sched_get_priority_min(POLICY);
+	pthread_attr_setstacksize(&attr, THREADSTACK);
+	pthread_attr_setschedparam(&attr, &param);
+
+	retval = pthread_barrier_init(&ControlStartBarrier,NULL,2);
+	retval = pthread_create(&(Control->ControlThread), &attr,ControlTask ,Control);
+
+
 	return 0;
 }
 
@@ -248,6 +265,10 @@ int ControlStart (void) {
 /* Les capteurs ainsi que tout le reste du système devrait être           */
 /* prêt à faire leur travail et il ne reste plus qu'à tout démarrer.      */
 	//return retval;
+	int retval=0;
+	ControlActivated=1;
+	pthread_barrier_wait(&ControlStartBarrier);
+	return retval;
 }
 
 
@@ -255,6 +276,9 @@ int ControlStart (void) {
 int ControlStop (ControlStruct *Control) {
 /* A faire! */
 /* Ici, vous devriez arrêter le contrôleur du drone.    */ 
+	ControlActivated=0;
+	pthread_barrier_destroy(&ControlStartBarrier);
+	pthread_join((Control->ControlThread), NULL);
 	return 0;
 }
 

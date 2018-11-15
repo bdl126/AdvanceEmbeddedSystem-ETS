@@ -177,17 +177,30 @@ void *MotorTask ( void *ptr ) {
 
 
 int MotorInit (MotorStruct *Motor) {
-int retval = 0;
+	int retval = 0;
+	pthread_attr_t		attr;
+	struct sched_param	param;
 /* A faire! */
 /* Ici, vous devriez faire l'initialisation des moteurs.   */
 /* C'est-à-dire initialiser le Port des moteurs avec la    */
 /* fonction MotorPortInit() et créer la Tâche MotorTask()  */
 /* qui va s'occuper des mises à jours des moteurs en cours */ 
 /* d'exécution.
- Creer la tache moter (pthread etc...)                                            */
+ Creer la tache moter (pthread etc...)
+
+             */
+	pthread_attr_init(&attr);
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setschedpolicy(&attr, POLICY);
+	param.sched_priority = sched_get_priority_min(POLICY);
+	pthread_attr_setstacksize(&attr, THREADSTACK);
+	pthread_attr_setschedparam(&attr, &param);
+
 	retval = pthread_barrier_init(&MotorStartBarrier,NULL,2);
 	MotorPortInit(Motor);
-	retval = pthread_create(&(Motor->MotorThread), NULL, MotorTask, Motor);
+	retval = pthread_create(&(Motor->MotorThread),  &attr, MotorTask, Motor);
 	return 0;
 }
 
@@ -218,7 +231,7 @@ int MotorStop (MotorStruct *Motor) {
 	motor_send(Motor,MOTOR_NONE);
 	pthread_spin_destroy(&(Motor->MotorLock));
 	sem_destroy(&MotorTimerSem);
-	pthread_join(Motor->MotorThread, 0);
+	pthread_join(Motor->MotorThread, NULL);
 	//
 	return 0;
 }

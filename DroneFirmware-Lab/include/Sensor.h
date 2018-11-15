@@ -161,7 +161,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "SONAR", \
 					 .File 		= -1, \
 					 .type 		= SONAR, \
-					 .DoLog     = 1, \
+					 .DoLog     = 0, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[SONAR], \
 					 .RawData	= &(RawData[SONAR][0]), \
@@ -182,7 +182,7 @@ typedef struct Sensor_struct {
 					   .Name 	 = "MAGNETOMETRE", \
 					   .File 	 = -1, \
 					   .type 	 = MAGNETOMETRE, \
-					   .DoLog    = 0, \
+					   .DoLog    = 1, \
 					   .DataIdx  = 0, \
 					   .Param	 = &ParamData[MAGNETOMETRE], \
 					   .RawData	 = &(RawData[MAGNETOMETRE][0]), \

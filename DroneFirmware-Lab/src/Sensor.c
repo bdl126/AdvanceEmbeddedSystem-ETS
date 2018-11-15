@@ -61,7 +61,7 @@ void *SensorTask ( void *ptr ) {
 				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
-			pthread_cond_signal(&(ptr2->DataNewSampleCondVar));
+			pthread_cond_broadcast(&(ptr2->DataNewSampleCondVar));
 			pthread_mutex_unlock(&(ptr2->DataSampleMutex));
 		}
 		else {
