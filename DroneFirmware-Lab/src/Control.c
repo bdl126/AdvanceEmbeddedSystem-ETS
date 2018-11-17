@@ -241,15 +241,20 @@ int ControlInit (ControlStruct *Control) {
 	int retval=0;
 	pthread_attr_t		attr;
 	struct sched_param	param;
+	int					minprio, maxprio;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+	minprio = sched_get_priority_min(POLICY);
+	maxprio = sched_get_priority_max(POLICY);
 	pthread_attr_setschedpolicy(&attr, POLICY);
-	param.sched_priority = sched_get_priority_min(POLICY);
+	param.sched_priority = minprio + (maxprio - minprio)/2;
 	pthread_attr_setstacksize(&attr, THREADSTACK);
 	pthread_attr_setschedparam(&attr, &param);
+
+	sem_init(&ControlTimerSem, 0, 0);
 
 	retval = pthread_barrier_init(&ControlStartBarrier,NULL,2);
 	retval = pthread_create(&(Control->ControlThread), &attr,ControlTask ,Control);

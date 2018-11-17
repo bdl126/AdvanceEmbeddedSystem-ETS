@@ -150,7 +150,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "GYROSCOPE", \
 					 .File 		= -1, \
 					 .type 		= GYROSCOPE, \
-					 .DoLog     = 0, \
+					 .DoLog     = 1, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[GYROSCOPE], \
 					 .RawData	= &(RawData[GYROSCOPE][0]), \

@@ -167,7 +167,7 @@ void *MotorTask ( void *ptr ) {
 	pthread_barrier_wait(&MotorStartBarrier);
 	while (MotorActivated) {
 //		DOSOMETHING();
-		//sem_wait(&MotorTimerSem); // chaque 5ms
+		sem_wait(&MotorTimerSem); // chaque 5ms
 		motor_send(ptr,MOTOR_PWM_ONLY);
 		// parsing data for led
 
@@ -180,6 +180,7 @@ int MotorInit (MotorStruct *Motor) {
 	int retval = 0;
 	pthread_attr_t		attr;
 	struct sched_param	param;
+	int					minprio, maxprio;
 /* A faire! */
 /* Ici, vous devriez faire l'initialisation des moteurs.   */
 /* C'est-à-dire initialiser le Port des moteurs avec la    */
@@ -192,11 +193,15 @@ int MotorInit (MotorStruct *Motor) {
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+	minprio = sched_get_priority_min(POLICY);
+	maxprio = sched_get_priority_max(POLICY);
 	pthread_attr_setschedpolicy(&attr, POLICY);
-	param.sched_priority = sched_get_priority_min(POLICY);
+	param.sched_priority = minprio + (maxprio - minprio)/2;
 	pthread_attr_setstacksize(&attr, THREADSTACK);
 	pthread_attr_setschedparam(&attr, &param);
+	sem_init(&MotorTimerSem, 0, 0);
+
 
 	retval = pthread_barrier_init(&MotorStartBarrier,NULL,2);
 	MotorPortInit(Motor);
@@ -230,7 +235,6 @@ int MotorStop (MotorStruct *Motor) {
 
 	motor_send(Motor,MOTOR_NONE);
 	pthread_spin_destroy(&(Motor->MotorLock));
-	sem_destroy(&MotorTimerSem);
 	pthread_join(Motor->MotorThread, NULL);
 	//
 	return 0;

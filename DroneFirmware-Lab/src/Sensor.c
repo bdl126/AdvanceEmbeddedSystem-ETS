@@ -30,6 +30,7 @@ void *SensorTask ( void *ptr ) {
 	int i =0;
 	SensorStruct * ptr2=(SensorStruct *)ptr;
 	SensorRawData LocalRawData;
+	SensorRawData PrevRawData;
 	int LocalIdx=0;
 	int File;
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
@@ -48,10 +49,9 @@ void *SensorTask ( void *ptr ) {
 				for(i=0;i<3;i++){
 					ptr2->Data[LocalIdx].Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-				//i=0;
-				ptr2->Data[LocalIdx].TimeDelay = (uint32_t)((LocalRawData.timestamp_s)-(LocalRawData.timestamp_n));
-	//			i=0;
+				ptr2->Data[LocalIdx].TimeDelay = ABS((uint32_t)((PrevRawData.timestamp_n)-(LocalRawData	.timestamp_n)));
 				memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
+				memcpy((void *) &PrevRawData, (void *) &LocalRawData, sizeof(SensorRawData));
 
 			}
 			else if(LocalRawData.status==OLD_SAMPLE){
@@ -88,15 +88,18 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 	struct sched_param	param;
 
 
+	int					minprio, maxprio;
+
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+	minprio = sched_get_priority_min(POLICY);
+	maxprio = sched_get_priority_max(POLICY);
 	pthread_attr_setschedpolicy(&attr, POLICY);
-	param.sched_priority = sched_get_priority_min(POLICY);
+	param.sched_priority = minprio + (maxprio - minprio)/2;
 	pthread_attr_setstacksize(&attr, THREADSTACK);
 	pthread_attr_setschedparam(&attr, &param);
-
 
 	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
 	for(i=0;i<NUM_SENSOR;i++){
@@ -218,13 +221,16 @@ int InitSensorLog (SensorStruct *Sensor) {
 	pthread_attr_t		attr;
 	struct sched_param	param;
 	int					retval;
+	int					minprio, maxprio;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-	pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
+	pthread_attr_setscope(&attr, PTHREAD_SCOPE_SYSTEM);
+	minprio = sched_get_priority_min(POLICY);
+	maxprio = sched_get_priority_max(POLICY);
 	pthread_attr_setschedpolicy(&attr, POLICY);
-	param.sched_priority = sched_get_priority_min(POLICY);
+	param.sched_priority = minprio + (maxprio - minprio)/2;
 	pthread_attr_setstacksize(&attr, THREADSTACK);
 	pthread_attr_setschedparam(&attr, &param);
 

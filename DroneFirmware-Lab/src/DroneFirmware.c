@@ -135,7 +135,7 @@ int getchar_nonblock(void) {
 int main(int argc, char *argv[]) {
 	struct sched_param	param;
 	int		minprio, maxprio;
-	char	IPAddress[20] = {TARGET_IP};
+ 	char	IPAddress[20] = {TARGET_IP};
 	int		i, j, retval = 0;
 	int		ch = 0;
 
@@ -178,7 +178,6 @@ int main(int argc, char *argv[]) {
    pthread_setschedparam(pthread_self(), POLICY, &param);
 
 	sem_init(&MainTimerSem, 0, 0);
-	sem_init(&MotorTimerSem, 0, 0);
 
 	if ((retval = pthread_spin_init(&(AttitudeDesire.AttitudeLock), 1)) < 0) {
 		printf("%s : Impossible d'initialiser le spinlock (AttitudeDesiree.AttitudeLock): retval = %d\n", __FUNCTION__, retval);
@@ -191,8 +190,8 @@ int main(int argc, char *argv[]) {
 
 	if ((retval = MotorInit(&Motor)) < 0)
 		return EXIT_FAILURE;
-	if ((retval = SensorsLogsInit(SensorTab)) < 0)
-		return EXIT_FAILURE;
+	//if ((retval = SensorsLogsInit(SensorTab)) < 0)
+	//	return EXIT_FAILURE;
 	if ((retval = SensorsInit(SensorTab)) < 0)
 		return EXIT_FAILURE;
 	if ((retval = AttitudeInit(AttitudeTab)) < 0)
@@ -210,7 +209,7 @@ int main(int argc, char *argv[]) {
 	SensorsStart();
 	AttitudeStart();
 
-	SensorsLogsStart();
+	//SensorsLogsStart();
 
 	MavlinkStart();
 	ControlStart();
@@ -224,21 +223,23 @@ int main(int argc, char *argv[]) {
 	}
 
 	MavlinkStop(&Mavlink);
-	pthread_spin_destroy(&(AttitudeDesire.AttitudeLock));
-	pthread_spin_destroy(&(AttitudeMesure.AttitudeLock));
 
 	ControlStop(&Control);
 
 	MotorStop(&Motor);
-	SensorsLogsStop(SensorTab);
+	//SensorsLogsStop(SensorTab);
 	SensorsStop(SensorTab);
 	AttitudeStop(AttitudeTab);
+	pthread_spin_destroy(&(AttitudeDesire.AttitudeLock));
+	pthread_spin_destroy(&(AttitudeMesure.AttitudeLock));
 
 	StopTimer();
+	sem_destroy(&MainTimerSem);
+	sem_destroy(&MotorTimerSem);
+	sem_destroy(&ControlTimerSem);
 
 	printf("%s Tout arrêté\n", __FUNCTION__);
 
-	sem_destroy(&MainTimerSem);
 
 	return EXIT_SUCCESS;
 }
