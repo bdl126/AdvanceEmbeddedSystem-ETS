@@ -36,11 +36,11 @@ void *SensorTask ( void *ptr ) {
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
-		pthread_spin_lock(&(ptr2->DataLock));
+		pthread_mutex_lock(&(ptr2->DataLockMutex));
 		ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
 		LocalIdx = (int)(ptr2->DataIdx);
 		File=ptr2->File;
-		pthread_spin_unlock(&(ptr2->DataLock));
+		pthread_mutex_unlock(&(ptr2->DataLockMutex));
 
 		if(read(File,&LocalRawData,sizeof(LocalRawData))==sizeof(LocalRawData)){
 			pthread_mutex_lock(&(ptr2->DataSampleMutex));
@@ -104,7 +104,7 @@ int SensorsInit (SensorStruct SensorTab[NUM_SENSOR]) {
 	retval = pthread_barrier_init(&SensorStartBarrier,NULL,NUM_SENSOR+1);
 	for(i=0;i<NUM_SENSOR;i++){
 		SensorTab[i].File=open(SensorTab[i].DevName,O_RDONLY);
-		retval = pthread_spin_init(&(SensorTab[i].DataLock),PTHREAD_PROCESS_SHARED);
+		retval = pthread_mutex_init(&(SensorTab[i].DataLockMutex),NULL);
 		retval = pthread_mutex_init(&(SensorTab[i].DataSampleMutex),NULL);
 		retval = pthread_cond_init(&(SensorTab[i].DataNewSampleCondVar),NULL);
 		retval = pthread_create(&(SensorTab[i].SensorThread), &attr, SensorTask, &SensorTab[i]);
@@ -141,7 +141,7 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 	for(i=0;i<NUM_SENSOR;i++){
 			pthread_join(SensorTab[i].SensorThread, NULL);
 			close(SensorTab[i].File);
-			pthread_spin_destroy(&(SensorTab[i].DataLock));
+			pthread_mutex_destroy(&(SensorTab[i].DataLockMutex));
 			pthread_mutex_destroy(&(SensorTab[i].DataSampleMutex));
 			pthread_cond_destroy(&(SensorTab[i].DataNewSampleCondVar));
 	}
@@ -179,12 +179,12 @@ void *SensorLogTask ( void *ptr ) {
 			pthread_cond_wait(&(Sensor->DataNewSampleCondVar), &(Sensor->DataSampleMutex));
 	    pthread_mutex_unlock(&(Sensor->DataSampleMutex));
 
-	   	pthread_spin_lock(&(Sensor->DataLock));
+	    pthread_mutex_lock(&(Sensor->DataLockMutex));
     	NavData   = &(Sensor->Data[LocalIdx]);
     	RawData   = &(Sensor->RawData[LocalIdx]);
 		memcpy((void *) &tpRaw, (void *) RawData, sizeof(SensorRawData));
 		memcpy((void *) &tpNav, (void *) NavData, sizeof(SensorData));
-	   	pthread_spin_unlock(&(Sensor->DataLock));
+		pthread_mutex_unlock(&(Sensor->DataLockMutex));
 
 	   	pthread_mutex_lock(&Log_Mutex);
 		if (numLogOutput == 0)

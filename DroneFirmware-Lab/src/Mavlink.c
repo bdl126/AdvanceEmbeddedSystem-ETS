@@ -41,11 +41,11 @@ void *MavlinkStatusTask(void *ptr) {
 		if (MavlinkActivated == 0)
 			break;
 		memset(buf, 0, BUFFER_LENGTH);
-		pthread_spin_lock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeMesure->AttitudeLock));
 		memcpy((void *) &Data, (void *) &(AttitudeMesure->Data), sizeof(AttData));
 		memcpy((void *) &Speed, (void *) &(AttitudeMesure->Speed), sizeof(AttData));
 		TimeStamp = AttitudeMesure->timestamp_s*1000 + AttitudeMesure->timestamp_n/1000000L;
-		pthread_spin_unlock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeMesure->AttitudeLock));
 
 		//Send Heartbeat
 		mavlink_msg_heartbeat_pack(SYSTEM_ID, COMPONENT_ID, &msg, MAV_TYPE_HELICOPTER, MAV_AUTOPILOT_GENERIC, MAV_MODE_GUIDED_ARMED, 0, MAV_STATE_ACTIVE);
@@ -62,15 +62,15 @@ void *MavlinkStatusTask(void *ptr) {
 		len = mavlink_msg_to_send_buffer(buf, &msg);
 		bytes_sent = sendto(Mavlink->sock, buf, len, 0, (struct sockaddr *)&Mavlink->gcAddr, sizeof(struct sockaddr_in));
 
-		pthread_spin_lock(&(AttitudeDesire->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeDesire->AttitudeLock));
 		memcpy((void *) &DataD, (void *) &(AttitudeDesire->Data), sizeof(AttData));
 		memcpy((void *) &SpeedD, (void *) &(AttitudeDesire->Speed), sizeof(AttData));
-		pthread_spin_unlock(&(AttitudeDesire->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeDesire->AttitudeLock));
 
-		pthread_spin_lock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeMesure->AttitudeLock));
 		memcpy((void *) &DataM, (void *) &(AttitudeMesure->Data), sizeof(AttData));
 		memcpy((void *) &SpeedM, (void *) &(AttitudeMesure->Speed), sizeof(AttData));
-		pthread_spin_unlock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeMesure->AttitudeLock));
 		Error[HEIGHT]    = DataD.Elevation - DataM.Elevation;
 		Error[ROLL]      = DataD.Roll - DataM.Roll;
 		Error[PITCH]     = DataD.Pitch - DataM.Pitch;
@@ -130,11 +130,11 @@ void *MavlinkReceiveTask(void *ptr) {
 				Data.Roll	    = Roll;
 				Data.Yaw	    = Yaw;
 				Data.Elevation  = Elevation;
-				pthread_spin_lock(&(AttitudeDesire->AttitudeLock));
+				pthread_mutex_lock(&(AttitudeDesire->AttitudeLock));
 				memcpy((void *) &(AttitudeDesire->Data), (void *) &Data, sizeof(AttData));
 				memcpy((void *) &(AttitudeDesire->Speed), (void *) &Speed, sizeof(AttData));
 				AttitudeDesire->Throttle = (float)man_control.z/1000;
-				pthread_spin_unlock(&(AttitudeDesire->AttitudeLock));
+				pthread_mutex_unlock(&(AttitudeDesire->AttitudeLock));
 			} else {	// Un message non attendu a ete recu
 			}
 		}

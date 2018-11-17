@@ -18,7 +18,7 @@ double KP[4] = {0.125,  0.125,  0.07,    0.0  };
 double KI[4] = {0.0,    0.0,    0.001,   0.0  };
 double KD[4] = {0.004,  0.004,  0.00004, 0.0  };
 
-
+/*
 void *ControlTaskOld ( void *ptr ) {
 	ControlStruct	*Control  = (ControlStruct *) ptr;
 	AttitudeData	*AttitudeDesire = Control->AttitudeDesire;
@@ -92,7 +92,7 @@ void *ControlTaskOld ( void *ptr ) {
    	printf("%s : Control Arrêté\n", __FUNCTION__);
 
 	pthread_exit(0); /* exit thread */
-}
+//}
 
 #define Ixx	(0.0241/2.0)					//	[kg*m^2]	Moment d'inertie autour de X
 #define Iyy	(0.0232/2.0)					//	[kg*m^2]	Moment d'inertie autour de Y
@@ -160,15 +160,15 @@ void *ControlTask ( void *ptr ) {
 		if (ControlActivated == 0)
 			break;
 
-		pthread_spin_lock(&(AttitudeDesire->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeDesire->AttitudeLock));
 		memcpy((void *) &DataD, (void *) &(AttitudeDesire->Data), sizeof(AttData));
 		memcpy((void *) &SpeedD, (void *) &(AttitudeDesire->Speed), sizeof(AttData));
-		pthread_spin_unlock(&(AttitudeDesire->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeDesire->AttitudeLock));
 
-		pthread_spin_lock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeMesure->AttitudeLock));
 		memcpy((void *) &DataM, (void *) &(AttitudeMesure->Data), sizeof(AttData));
 		memcpy((void *) &SpeedM, (void *) &(AttitudeMesure->Speed), sizeof(AttData));
-		pthread_spin_unlock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeMesure->AttitudeLock));
 
 		Error[HEIGHT]    = DataD.Elevation - DataM.Elevation;
 		Error[ROLL]      = DataD.Roll - DataM.Roll;
@@ -213,7 +213,7 @@ void *ControlTask ( void *ptr ) {
 
 		PWM[1] = PWM[2] = PWM[3] = PWM[0];
 
-		pthread_spin_lock(&(Motor->MotorLock));
+		pthread_mutex_lock(&(Motor->MotorLock));
    	Motor->pwm[0] = (uint16_t)(PWM[0]*0x01ff);
    	Motor->pwm[1] = (uint16_t)(PWM[1]*0x01ff);
    	Motor->pwm[2] = (uint16_t)(PWM[2]*0x01ff);
@@ -222,7 +222,7 @@ void *ControlTask ( void *ptr ) {
    	Motor->led[1] = (Motor->pwm[1] > 0.0) ? MOTOR_LEDGREEN : MOTOR_LEDRED;
    	Motor->led[2] = (Motor->pwm[2] > 0.0) ? MOTOR_LEDGREEN : MOTOR_LEDRED;
    	Motor->led[3] = (Motor->pwm[3] > 0.0) ? MOTOR_LEDGREEN : MOTOR_LEDRED;
-   	pthread_spin_unlock(&(Motor->MotorLock));
+   	pthread_mutex_unlock(&(Motor->MotorLock));
 	}
 
    	printf("%s : Control Arrêté\n", __FUNCTION__);

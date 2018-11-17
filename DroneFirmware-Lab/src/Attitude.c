@@ -43,7 +43,7 @@ void *AttitudeTask ( void *ptr ) {
 			break;
 		}
 
-		pthread_spin_lock(&(Sensor->DataLock));
+		pthread_mutex_lock(&(Sensor->DataLockMutex));
 		DataIdx[0]    = Sensor->DataIdx;
 		DataIdx[1] = (DataIdx[0] + DATABUFSIZE - 1) % DATABUFSIZE;
 		memcpy((void *) &(SensorData[0][0]), (void *) (Sensor->Data[DataIdx[0]].Data), 3*sizeof(double));
@@ -51,13 +51,13 @@ void *AttitudeTask ( void *ptr ) {
 		timestamp_s = Sensor->RawData[DataIdx[0]].timestamp_s;
 		timestamp_n = Sensor->RawData[DataIdx[0]].timestamp_n;
   	  	Ts			= ((double) (Sensor->Data[DataIdx[0]].TimeDelay))/1000000000.0;
-		pthread_spin_unlock(&(Sensor->DataLock));
+  	  	pthread_mutex_unlock(&(Sensor->DataLockMutex));
 		pthread_mutex_unlock(&(Sensor->DataSampleMutex));
 
-		pthread_spin_lock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeMesure->AttitudeLock));
 		memcpy((void *) &LocData, (void *) &(Attitude->AttitudeMesure->Data), sizeof(AttData));
 		memcpy((void *) &LocSpeed, (void *) &(Attitude->AttitudeMesure->Speed), sizeof(AttData));
-		pthread_spin_unlock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeMesure->AttitudeLock));
 
 	  	Ka = ((2.0*Tau - Ts)/(2.0*Tau + Ts));
 	  	Kb = (Ts/(2.0*Tau + Ts));
@@ -86,12 +86,12 @@ void *AttitudeTask ( void *ptr ) {
   								break;
 		}
 
-		pthread_spin_lock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_lock(&(AttitudeMesure->AttitudeLock));
 		memcpy((void *) &(Attitude->AttitudeMesure->Data), (void *) &LocData, sizeof(AttData));
 		memcpy((void *) &(Attitude->AttitudeMesure->Speed), (void *) &LocSpeed, sizeof(AttData));
 		AttitudeMesure->timestamp_s = timestamp_s;
 		AttitudeMesure->timestamp_n = timestamp_n;
-		pthread_spin_unlock(&(AttitudeMesure->AttitudeLock));
+		pthread_mutex_unlock(&(AttitudeMesure->AttitudeLock));
 
 	}
 

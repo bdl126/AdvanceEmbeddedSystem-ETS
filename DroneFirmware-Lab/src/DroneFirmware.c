@@ -173,25 +173,26 @@ int main(int argc, char *argv[]) {
 	}
 	printf("%s : IP = %s\n", __FUNCTION__, IPAddress);
 	printf("%s ça démarre !!!\n", __FUNCTION__);
-
-	param.sched_priority = sched_get_priority_min(POLICY);
-   pthread_setschedparam(pthread_self(), POLICY, &param);
+	minprio = sched_get_priority_min(POLICY);
+	maxprio = sched_get_priority_max(POLICY);
+	param.sched_priority = minprio + (maxprio - minprio)/2;
+	pthread_setschedparam(pthread_self(), POLICY, &param);
 
 	sem_init(&MainTimerSem, 0, 0);
 
-	if ((retval = pthread_spin_init(&(AttitudeDesire.AttitudeLock), 1)) < 0) {
+	if ((retval = pthread_mutex_init(&(AttitudeDesire.AttitudeLock),NULL)) < 0) {
 		printf("%s : Impossible d'initialiser le spinlock (AttitudeDesiree.AttitudeLock): retval = %d\n", __FUNCTION__, retval);
 		return -1; /* exit thread */
 	}
-	if ((retval = pthread_spin_init(&(AttitudeMesure.AttitudeLock), 1)) < 0) {
+	if ((retval = pthread_mutex_init(&(AttitudeMesure.AttitudeLock), NULL)) < 0) {
 		printf("%s : Impossible d'initialiser le spinlock (AttitudeDesiree.AttitudeLock): retval = %d\n", __FUNCTION__, retval);
 		return -1; /* exit thread */
 	}
 
 	if ((retval = MotorInit(&Motor)) < 0)
 		return EXIT_FAILURE;
-	//if ((retval = SensorsLogsInit(SensorTab)) < 0)
-	//	return EXIT_FAILURE;
+	if ((retval = SensorsLogsInit(SensorTab)) < 0)
+		return EXIT_FAILURE;
 	if ((retval = SensorsInit(SensorTab)) < 0)
 		return EXIT_FAILURE;
 	if ((retval = AttitudeInit(AttitudeTab)) < 0)
@@ -209,7 +210,7 @@ int main(int argc, char *argv[]) {
 	SensorsStart();
 	AttitudeStart();
 
-	//SensorsLogsStart();
+	SensorsLogsStart();
 
 	MavlinkStart();
 	ControlStart();
@@ -227,11 +228,11 @@ int main(int argc, char *argv[]) {
 	ControlStop(&Control);
 
 	MotorStop(&Motor);
-	//SensorsLogsStop(SensorTab);
+	SensorsLogsStop(SensorTab);
 	SensorsStop(SensorTab);
 	AttitudeStop(AttitudeTab);
-	pthread_spin_destroy(&(AttitudeDesire.AttitudeLock));
-	pthread_spin_destroy(&(AttitudeMesure.AttitudeLock));
+	pthread_mutex_destroy(&(AttitudeDesire.AttitudeLock));
+	pthread_mutex_destroy(&(AttitudeMesure.AttitudeLock));
 
 	StopTimer();
 	sem_destroy(&MainTimerSem);

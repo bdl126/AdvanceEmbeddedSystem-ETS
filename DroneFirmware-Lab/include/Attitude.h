@@ -52,7 +52,7 @@ typedef struct AttitudeData_struct {
 	AttData		Data;
 	AttData		Speed;
 	double 		Throttle;
-	pthread_spinlock_t 	AttitudeLock;
+	pthread_mutex_t 	AttitudeLock;
 } AttitudeData;
 
 

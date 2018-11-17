@@ -121,13 +121,13 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 
 	switch (SendMode) {
 	case MOTOR_NONE :
-		pthread_spin_lock(&(Motor->MotorLock));
+		pthread_mutex_lock(&(Motor->MotorLock));
 		write(Motor->file,cmd,5);
-		pthread_spin_unlock(&(Motor->MotorLock));
+		pthread_mutex_unlock(&(Motor->MotorLock));
 						break;
 	case MOTOR_PWM_ONLY :	/* A faire! */
 
-		pthread_spin_lock(&(Motor->MotorLock));
+		pthread_mutex_lock(&(Motor->MotorLock));
 		temp_pwm[0]=Motor->pwm[0];
 		temp_pwm[1]=Motor->pwm[1];
 		temp_pwm[2]=Motor->pwm[2];
@@ -137,7 +137,7 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		temp_led[1]=Motor->led[1];
 		temp_led[2]=Motor->led[2];
 		temp_led[3]=Motor->led[3];
-		pthread_spin_unlock(&(Motor->MotorLock));
+		pthread_mutex_unlock(&(Motor->MotorLock));
 		//parsing data for motor
 		cmd[0]=0x20 | ((temp_pwm[0]&0x1ff)>>4);
 		cmd[1]=((temp_pwm[0]&0x1ff)<<4) | ((temp_pwm[1]&0x1ff)>>5);
@@ -145,9 +145,9 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		cmd[3]=((temp_pwm[2]&0x1ff)<<2) | ((temp_pwm[3]&0x1ff)>>7);
 		cmd[4]=((temp_pwm[3]&0x1ff)<<1) ;
 
-		pthread_spin_lock(&(Motor->MotorLock));
+		pthread_mutex_lock(&(Motor->MotorLock));
 		write(Motor->file,cmd,5);
-		pthread_spin_unlock(&(Motor->MotorLock));
+		pthread_mutex_unlock(&(Motor->MotorLock));
 
 							break;
 	case MOTOR_LED_ONLY :	/* A faire! */
@@ -234,7 +234,7 @@ int MotorStop (MotorStruct *Motor) {
 	MotorActivated = 0;
 
 	motor_send(Motor,MOTOR_NONE);
-	pthread_spin_destroy(&(Motor->MotorLock));
+	pthread_mutex_destroy(&(Motor->MotorLock));
 	pthread_join(Motor->MotorThread, NULL);
 	//
 	return 0;

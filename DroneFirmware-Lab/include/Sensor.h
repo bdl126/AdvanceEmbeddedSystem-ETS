@@ -71,7 +71,7 @@ typedef struct Sensor_struct {
 	const char 			*Name;
 	int					File;
 	uint16_t			type;
-	pthread_spinlock_t 	DataLock;
+	pthread_mutex_t 	DataLockMutex;
 	//sem_t				DataSem;
 	pthread_mutex_t 	DataSampleMutex;
 	pthread_cond_t  	DataNewSampleCondVar;
@@ -182,7 +182,7 @@ typedef struct Sensor_struct {
 					   .Name 	 = "MAGNETOMETRE", \
 					   .File 	 = -1, \
 					   .type 	 = MAGNETOMETRE, \
-					   .DoLog    = 1, \
+					   .DoLog    = 0, \
 					   .DataIdx  = 0, \
 					   .Param	 = &ParamData[MAGNETOMETRE], \
 					   .RawData	 = &(RawData[MAGNETOMETRE][0]), \
