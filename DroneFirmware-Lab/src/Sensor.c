@@ -33,6 +33,7 @@ void *SensorTask ( void *ptr ) {
 	SensorRawData PrevRawData;
 	int LocalIdx=0;
 	int File;
+	uint32_t prev_temp_time;
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
@@ -49,7 +50,13 @@ void *SensorTask ( void *ptr ) {
 				for(i=0;i<3;i++){
 					ptr2->Data[LocalIdx].Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-				ptr2->Data[LocalIdx].TimeDelay = ABS((uint32_t)((PrevRawData.timestamp_n)-(LocalRawData	.timestamp_n)));
+				if((PrevRawData.timestamp_s)!=LocalRawData	.timestamp_s){
+					prev_temp_time = (uint32_t)(0xFFFFFFFF-PrevRawData.timestamp_n);
+					ptr2->Data[LocalIdx].TimeDelay = prev_temp_time + LocalRawData.timestamp_n;
+				}
+				else{
+					ptr2->Data[LocalIdx].TimeDelay = (uint32_t) ABS((((int32_t)(PrevRawData.timestamp_n))-((int32_t)(LocalRawData	.timestamp_n))));
+				}
 				memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
 				memcpy((void *) &PrevRawData, (void *) &LocalRawData, sizeof(SensorRawData));
 
@@ -71,7 +78,7 @@ void *SensorTask ( void *ptr ) {
 
 
 	}
-	printf("%s EXIT:! %s",  __FUNCTION__,ptr2->Name);
+	printf("%s EXIT:! %s\n",  __FUNCTION__,ptr2->Name);
 	pthread_exit(0); /* exit thread */
 }
 
@@ -140,12 +147,12 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 	printf("%s pthread_gon_stawp !!!\n", __FUNCTION__);
 	for(i=0;i<NUM_SENSOR;i++){
 			pthread_join(SensorTab[i].SensorThread, NULL);
-			close(SensorTab[i].File);
 			pthread_mutex_destroy(&(SensorTab[i].DataLockMutex));
 			pthread_mutex_destroy(&(SensorTab[i].DataSampleMutex));
 			pthread_cond_destroy(&(SensorTab[i].DataNewSampleCondVar));
+			close(SensorTab[i].File);
 	}
-	printf("%s pthread_stawp !!!\n", __FUNCTION__);
+	printf("%s arreter\n", __FUNCTION__);
 	return 0;
 }
 
@@ -286,6 +293,7 @@ int SensorsLogsStop (SensorStruct SensorTab[]) {
 		}
 	}
 	pthread_mutex_destroy(&Log_Mutex);
+	printf("%s arreter\n", __FUNCTION__);
 
 	return 0;
 };

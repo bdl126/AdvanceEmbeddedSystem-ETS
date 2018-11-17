@@ -24,7 +24,7 @@
 #include "Motor.h"
 #include "Attitude.h"
 
-#define POLICY SCHED_RR
+#define POLICY SCHED_FIFO
 #define THREADSTACK  65536
 
 enum { HEIGHT, ROLL, PITCH, YAW };

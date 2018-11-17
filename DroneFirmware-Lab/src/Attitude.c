@@ -153,7 +153,7 @@ int AttitudeStop (AttitudeStruct AttitudeTab[NUM_SENSOR]) {
 		pthread_cond_broadcast(&(Sensor->DataNewSampleCondVar));
 		pthread_join(AttitudeTab[i].AttitudeThread, NULL);
 	}
-
+	printf("%s arreter\n", __FUNCTION__);
 	return 0;
 }
 

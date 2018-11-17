@@ -226,11 +226,10 @@ int main(int argc, char *argv[]) {
 	MavlinkStop(&Mavlink);
 
 	ControlStop(&Control);
-
-	MotorStop(&Motor);
+	AttitudeStop(AttitudeTab);
 	SensorsLogsStop(SensorTab);
 	SensorsStop(SensorTab);
-	AttitudeStop(AttitudeTab);
+	MotorStop(&Motor);
 	pthread_mutex_destroy(&(AttitudeDesire.AttitudeLock));
 	pthread_mutex_destroy(&(AttitudeMesure.AttitudeLock));
 

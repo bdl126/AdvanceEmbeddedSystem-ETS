@@ -236,6 +236,7 @@ int MotorStop (MotorStruct *Motor) {
 	motor_send(Motor,MOTOR_NONE);
 	pthread_mutex_destroy(&(Motor->MotorLock));
 	pthread_join(Motor->MotorThread, NULL);
+	printf("%s arreter\n", __FUNCTION__);
 	//
 	return 0;
 }
