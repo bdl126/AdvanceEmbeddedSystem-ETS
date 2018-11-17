@@ -50,18 +50,18 @@ void *SensorTask ( void *ptr ) {
 				for(i=0;i<3;i++){
 					ptr2->Data[LocalIdx].Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-				if((PrevRawData.timestamp_s)!=LocalRawData	.timestamp_s){
-					prev_temp_time = (uint32_t)(0xFFFFFFFF-PrevRawData.timestamp_n);
+				if((PrevRawData.timestamp_s) != LocalRawData.timestamp_s){
+					prev_temp_time = (uint32_t)(1000000000.0-PrevRawData.timestamp_n);//calcul du temps qu'il reste avant 1 seconde
 					ptr2->Data[LocalIdx].TimeDelay = prev_temp_time + LocalRawData.timestamp_n;
 				}
 				else{
-					ptr2->Data[LocalIdx].TimeDelay = (uint32_t) ABS((((int32_t)(PrevRawData.timestamp_n))-((int32_t)(LocalRawData	.timestamp_n))));
+					ptr2->Data[LocalIdx].TimeDelay = (uint32_t) ABS((((int32_t)(PrevRawData.timestamp_n))-((int32_t)(LocalRawData.timestamp_n))));
 				}
 				memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
 				memcpy((void *) &PrevRawData, (void *) &LocalRawData, sizeof(SensorRawData));
 
 			}
-			else if(LocalRawData.status==OLD_SAMPLE){
+			else if(LocalRawData.status == OLD_SAMPLE){
 				printf("%s that's some old stuff son! ",  __FUNCTION__);
 			}
 			else {
