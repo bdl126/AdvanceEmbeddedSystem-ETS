@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "Control.h"
-#define POLICY SCHED_RR
+//#define POLICY SCHED_RR
 
 
 #define MAVLINK_STATUS_PERIOD	2

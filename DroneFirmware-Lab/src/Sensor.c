@@ -31,34 +31,25 @@ void *SensorTask ( void *ptr ) {
 	SensorStruct * ptr2=(SensorStruct *)ptr;
 	SensorRawData LocalRawData;
 	SensorRawData PrevRawData;
+	SensorData LocalData;
+	uint32_t Naughtydata[3];
+	uint32_t sample[3][100];
 	int LocalIdx=0;
-	int File;
-	uint32_t prev_temp_time;
+	int File=ptr2->File;
+
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
-		pthread_mutex_lock(&(ptr2->DataLockMutex));
-		ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
-		LocalIdx = (int)(ptr2->DataIdx);
-		File=ptr2->File;
-		pthread_mutex_unlock(&(ptr2->DataLockMutex));
+
 
 		if(read(File,&LocalRawData,sizeof(LocalRawData))==sizeof(LocalRawData)){
-			pthread_mutex_lock(&(ptr2->DataSampleMutex));
 			if(LocalRawData.status == NEW_SAMPLE){
 
 				for(i=0;i<3;i++){
-					ptr2->Data[LocalIdx].Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
+					LocalData.Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-				if((PrevRawData.timestamp_s) != LocalRawData.timestamp_s){
-					prev_temp_time = (uint32_t)(1000000000.0-PrevRawData.timestamp_n);//calcul du temps qu'il reste avant 1 seconde
-					ptr2->Data[LocalIdx].TimeDelay = prev_temp_time + LocalRawData.timestamp_n;
-				}
-				else{
-					ptr2->Data[LocalIdx].TimeDelay = (uint32_t) ABS((((int32_t)(PrevRawData.timestamp_n))-((int32_t)(LocalRawData.timestamp_n))));
-				}
-				memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
-				memcpy((void *) &PrevRawData, (void *) &LocalRawData, sizeof(SensorRawData));
+
+				LocalData.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
 
 			}
 			else if(LocalRawData.status == OLD_SAMPLE){
@@ -68,8 +59,21 @@ void *SensorTask ( void *ptr ) {
 				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
+
+
+			pthread_mutex_lock(&(ptr2->DataLockMutex));
+			ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
+			LocalIdx = (int)(ptr2->DataIdx);
+			pthread_mutex_unlock(&(ptr2->DataLockMutex));
+			pthread_mutex_lock(&(ptr2->DataSampleMutex));
+
+			memcpy((void *) &(ptr2->Data[LocalIdx]), (void *) &LocalData, sizeof(SensorData));
+			memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
+
 			pthread_cond_broadcast(&(ptr2->DataNewSampleCondVar));
 			pthread_mutex_unlock(&(ptr2->DataSampleMutex));
+
+			memcpy((void *) &PrevRawData, (void *) &LocalRawData, sizeof(SensorRawData));
 		}
 		else {
 			//La structure n'a pas ete copier en entier
