@@ -27,7 +27,9 @@ void *SensorTask ( void *ptr ) {
 /* A faire! */
 /* Tache qui sera instancié pour chaque sensor. Elle s'occupe d'aller */
 /* chercher les donnees du sensor.                                    */
-	int i =0;
+	int i = 0;
+	int j = 0;
+	int k = 0;
 	SensorStruct * ptr2=(SensorStruct *)ptr;
 	SensorRawData LocalRawData;
 	SensorRawData PrevRawData;
@@ -41,16 +43,13 @@ void *SensorTask ( void *ptr ) {
 	pthread_barrier_wait(&SensorStartBarrier);
 	while (SensorsActivated) {
 
-
 		if(read(File,&LocalRawData,sizeof(LocalRawData))==sizeof(LocalRawData)){
 			if(LocalRawData.status == NEW_SAMPLE){
 
 				for(i=0;i<3;i++){
 					LocalData.Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-
 				LocalData.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
-
 			}
 			else if(LocalRawData.status == OLD_SAMPLE){
 				printf("%s that's some old stuff son! ",  __FUNCTION__);
@@ -59,7 +58,26 @@ void *SensorTask ( void *ptr ) {
 				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
+			if(ptr2->type == GYROSCOPE){
+				//fetch data
+				for (i=0; i<3 ; i++){
+					sample[i][j]=LocalData.Data[i];
+				}
 
+				if(j == 99){
+					//calcul de moyenne
+					for(k=0;k<100;k++){
+						for(i=0;i<3;i++){
+							Naughtydata[i]+=sample[i][k];
+						}
+					}
+					//affichage de moyenne
+					for (i=0; i<3 ; i++){
+						printf("%s LocalMeanData indice=%d valeur=%d\n", __FUNCTION__,i,Naughtydata[i]/100);
+					}
+				}
+				j=(j+1)%100;
+			}
 
 			pthread_mutex_lock(&(ptr2->DataLockMutex));
 			ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
