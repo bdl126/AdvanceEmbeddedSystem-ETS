@@ -101,7 +101,7 @@ typedef struct Sensor_struct {
 	 	 	 	 	 .maxVal			   = 4095.0, \
 	 	 	 	 	 .Conversion		   = M_PI/(180.0*16.375), \
 	 	 	 	 	 .alpha				   = {{1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{0.0, 0.0, 1.0}}, \
-	 	 	 	 	 .beta				   = {0.0, 0.0, 0.0} \
+	 	 	 	 	 .beta				   = {-0.116231, 0.080472, 0.001641} \
 				   }
 
 #define SONAR_PARAM { .AbsErrorMax			= 25, \

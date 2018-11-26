@@ -34,8 +34,9 @@ void *SensorTask ( void *ptr ) {
 	SensorRawData LocalRawData;
 	SensorRawData PrevRawData;
 	SensorData LocalData;
-	uint32_t Naughtydata[3];
-	uint32_t sample[3][100];
+	SensorData LocalDataCorriger;
+	double Naughtydata[3];
+	double sample[3][100];
 	int LocalIdx=0;
 	int File=ptr2->File;
 
@@ -49,6 +50,10 @@ void *SensorTask ( void *ptr ) {
 				for(i=0;i<3;i++){
 					LocalData.Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
+			/*	for(i=0;i<3;i++){
+					LocalDataCorriger.Data[i] = (LocalData.Data[0])*(ptr2->Param->alpha[i][0])+(LocalData.Data[1])*(ptr2->Param->alpha[i][1])+(LocalData.Data[2])*(ptr2->Param->alpha[i][2])+(ptr2->Param->beta[i]);
+				}
+*/
 				LocalData.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
 			}
 			else if(LocalRawData.status == OLD_SAMPLE){
@@ -58,7 +63,7 @@ void *SensorTask ( void *ptr ) {
 				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
-			if(ptr2->type == GYROSCOPE){
+			/*if(ptr2->type == GYROSCOPE){
 				//fetch data
 				for (i=0; i<3 ; i++){
 					sample[i][j]=LocalData.Data[i];
@@ -73,11 +78,12 @@ void *SensorTask ( void *ptr ) {
 					}
 					//affichage de moyenne
 					for (i=0; i<3 ; i++){
-						printf("%s LocalMeanData indice=%d valeur=%d\n", __FUNCTION__,i,Naughtydata[i]/100);
+						printf("%s LocalMeanData indice=%d valeur=%lf\n", __FUNCTION__,i,Naughtydata[i]/100.0);
+						Naughtydata[i]=0;
 					}
 				}
 				j=(j+1)%100;
-			}
+			}*/
 
 			pthread_mutex_lock(&(ptr2->DataLockMutex));
 			ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
