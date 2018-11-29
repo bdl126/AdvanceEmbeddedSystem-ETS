@@ -101,7 +101,7 @@ typedef struct Sensor_struct {
 	 	 	 	 	 .maxVal			   = 4095.0, \
 	 	 	 	 	 .Conversion		   = M_PI/(180.0*16.375), \
 	 	 	 	 	 .alpha				   = {{1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{0.0, 0.0, 1.0}}, \
-	 	 	 	 	 .beta				   = {-0.116231, 0.080472, 0.001641} \
+	 	 	 	 	 .beta				   = {-0.013622,-0.042698, 0.016531} \
 				   }
 
 #define SONAR_PARAM { .AbsErrorMax			= 25, \
@@ -150,7 +150,7 @@ typedef struct Sensor_struct {
 					 .Name 		= "GYROSCOPE", \
 					 .File 		= -1, \
 					 .type 		= GYROSCOPE, \
-					 .DoLog     = 1, \
+					 .DoLog     = 0, \
 					 .DataIdx   = 0, \
 					 .Param		= &ParamData[GYROSCOPE], \
 					 .RawData	= &(RawData[GYROSCOPE][0]), \

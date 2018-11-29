@@ -50,11 +50,11 @@ void *SensorTask ( void *ptr ) {
 				for(i=0;i<3;i++){
 					LocalData.Data[i] = ((double)(((LocalRawData.data[i])-(ptr2->Param->centerVal))*(ptr2->Param->Conversion)));
 				}
-			/*	for(i=0;i<3;i++){
-					LocalDataCorriger.Data[i] = (LocalData.Data[0])*(ptr2->Param->alpha[i][0])+(LocalData.Data[1])*(ptr2->Param->alpha[i][1])+(LocalData.Data[2])*(ptr2->Param->alpha[i][2])+(ptr2->Param->beta[i]);
+				for(i=0;i<3;i++){
+					LocalDataCorriger.Data[i] = ((LocalData.Data[0])*(ptr2->Param->alpha[i][0])+(LocalData.Data[1])*(ptr2->Param->alpha[i][1])+(LocalData.Data[2])*(ptr2->Param->alpha[i][2]))+(ptr2->Param->beta[i]);
 				}
-*/
-				LocalData.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
+
+				LocalDataCorriger.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
 			}
 			else if(LocalRawData.status == OLD_SAMPLE){
 				printf("%s that's some old stuff son! ",  __FUNCTION__);
@@ -63,6 +63,17 @@ void *SensorTask ( void *ptr ) {
 				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
+		/*	if(ptr2->type == GYROSCOPE){
+				if()
+				for (i=0; i<3 ; i++){
+						printf("%s LocalMeanData indice=%d valeur=%lf\n", __FUNCTION__,i,Naughtydata[i]);
+				}
+
+
+			}*/
+
+
+			//Calcul moyenne beta gyroscope
 			/*if(ptr2->type == GYROSCOPE){
 				//fetch data
 				for (i=0; i<3 ; i++){
@@ -91,7 +102,7 @@ void *SensorTask ( void *ptr ) {
 			pthread_mutex_unlock(&(ptr2->DataLockMutex));
 			pthread_mutex_lock(&(ptr2->DataSampleMutex));
 
-			memcpy((void *) &(ptr2->Data[LocalIdx]), (void *) &LocalData, sizeof(SensorData));
+			memcpy((void *) &(ptr2->Data[LocalIdx]), (void *) &LocalDataCorriger, sizeof(SensorData));
 			memcpy((void *) &(ptr2->RawData[LocalIdx]), (void *) &LocalRawData, sizeof(SensorRawData));
 
 			pthread_cond_broadcast(&(ptr2->DataNewSampleCondVar));
