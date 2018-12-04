@@ -39,6 +39,7 @@ void *SensorTask ( void *ptr ) {
 	double sample[3][100];
 	int LocalIdx=0;
 	int File=ptr2->File;
+	int horselimit =0;
 
 	printf("%s pthread_barrier_wait !!!\n", __FUNCTION__);
 	pthread_barrier_wait(&SensorStartBarrier);
@@ -57,22 +58,18 @@ void *SensorTask ( void *ptr ) {
 				LocalDataCorriger.TimeDelay = (uint32_t) (((LocalRawData.timestamp_s * 1000000000)+(LocalRawData.timestamp_n))-(((PrevRawData.timestamp_s * 1000000000))+PrevRawData.timestamp_n));
 			}
 			else if(LocalRawData.status == OLD_SAMPLE){
-				printf("%s that's some old stuff son! ",  __FUNCTION__);
+				printf("%s OLD_SAMPLE ! ",  __FUNCTION__);
 			}
 			else {
-				printf("%s you done messed up A-Aron !!!\n", __FUNCTION__);
 				printf("%s LocalRawData.status=%d\n", __FUNCTION__,LocalRawData.status);
 			}
+			//Pour la moyenne des valeurs recus par le gyroscope
 		/*	if(ptr2->type == GYROSCOPE){
 				if()
 				for (i=0; i<3 ; i++){
 						printf("%s LocalMeanData indice=%d valeur=%lf\n", __FUNCTION__,i,Naughtydata[i]);
 				}
-
-
 			}*/
-
-
 			//Calcul moyenne beta gyroscope
 			/*if(ptr2->type == GYROSCOPE){
 				//fetch data
@@ -95,6 +92,25 @@ void *SensorTask ( void *ptr ) {
 				}
 				j=(j+1)%100;
 			}*/
+			for (i=0; i<3 ; i++){
+
+				if(((ptr2->Param->minVal)>(LocalDataCorriger.Data[i])) && ((LocalDataCorriger.Data[i])>(ptr2->Param->maxVal))){
+					horselimit=1;
+				}
+
+			}
+
+			if(horselimit){
+				pthread_mutex_lock(&(ptr2->DataSampleMutex));
+				LocalDataCorriger.Data[0]=ptr2->Data[LocalIdx].Data[0];
+				LocalDataCorriger.Data[1]=ptr2->Data[LocalIdx].Data[1];
+				LocalDataCorriger.Data[2]=ptr2->Data[LocalIdx].Data[2];
+				pthread_mutex_unlock(&(ptr2->DataSampleMutex));
+				horselimit=0;
+				printf("%s horslimit ! ",  __FUNCTION__);
+			}
+
+
 
 			pthread_mutex_lock(&(ptr2->DataLockMutex));
 			ptr2->DataIdx=(ptr2->DataIdx+1)%MAX_TOT_SAMPLE;
@@ -183,7 +199,7 @@ int SensorsStop (SensorStruct SensorTab[NUM_SENSOR]) {
 	int i =0;
 	SensorsActivated=0;
 	pthread_barrier_destroy(&SensorStartBarrier);
-	printf("%s pthread_gon_stawp !!!\n", __FUNCTION__);
+	printf("%s pthread_stop !!!\n", __FUNCTION__);
 	for(i=0;i<NUM_SENSOR;i++){
 			pthread_join(SensorTab[i].SensorThread, NULL);
 			pthread_mutex_destroy(&(SensorTab[i].DataLockMutex));

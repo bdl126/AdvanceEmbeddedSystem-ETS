@@ -86,9 +86,9 @@ typedef struct Sensor_struct {
 
 #define ACCEL_PARAM { .AbsErrorMax 	        = 25, \
 		 	 	 	  .RelErrorMax   		= 25, \
-		 	 	 	  .minVal 		 		= 0.0, \
+		 	 	 	  .minVal 		 		= -4.0, \
 		 	 	 	  .centerVal 	 		= 2048.0, \
-		 	 	 	  .maxVal 		 		= 4095.0, \
+		 	 	 	  .maxVal 		 		= 4.0, \
 					  .Conversion 	 		= 4.0/2048.0, \
 					  .alpha 		 		= {{0.98081557, -0.05644951, -0.02957259},{-0.05646295, 0.98907009, -0.03478460},{-0.02957224, -0.03477524, 1.02502064}}, \
 					  .beta 		 		= {-0.03472795, -0.00820768, 0.01836154} \
@@ -96,9 +96,9 @@ typedef struct Sensor_struct {
 
 #define GYRO_PARAM { .AbsErrorMax		   = 25, \
 	 	 	 	 	 .RelErrorMax		   = 25, \
-	 	 	 	 	 .minVal			   = -4096.0, \
+	 	 	 	 	 .minVal			   = -10, \
 	 	 	 	 	 .centerVal			   = 0.0, \
-	 	 	 	 	 .maxVal			   = 4095.0, \
+	 	 	 	 	 .maxVal			   = 10, \
 	 	 	 	 	 .Conversion		   = M_PI/(180.0*16.375), \
 	 	 	 	 	 .alpha				   = {{1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{0.0, 0.0, 1.0}}, \
 	 	 	 	 	 .beta				   = {-0.013622,-0.042698, 0.016531} \
@@ -106,9 +106,9 @@ typedef struct Sensor_struct {
 
 #define SONAR_PARAM { .AbsErrorMax			= 25, \
 					  .RelErrorMax			= 25, \
-					  .minVal				= 0.0, \
+					  .minVal				= 0.2, \
 					  .centerVal			= 0.0, \
-					  .maxVal				= 0.0, \
+					  .maxVal				= 11.6, \
 					  .Conversion			= 0.00034454, \
 					  .alpha				= {{1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{0.0, 0.0, 1.0}}, \
 					  .beta					= {0.0, 0.0, 0.0} \
@@ -126,9 +126,9 @@ typedef struct Sensor_struct {
 
 #define MAGNETO_PARAM { .AbsErrorMax  		  = 25, \
 						.RelErrorMax  		  = 25, \
-						.minVal		  		  = -300.0, \
+						.minVal		  		  = 163.33, \
 						.centerVal	  		  = 0.0, \
-						.maxVal		  		  = 300.0, \
+						.maxVal		  		  = 190.0, \
 						.Conversion	  		  = 12.0/4096.0, \
 						.alpha		  		  = {{2.11841928, 0.00351888, 0.00397052},{0.00331451, 2.07320710, -0.01264231},{0.00518187, -0.00926185, 2.32147984}}, \
 						.beta		  		  = {-0.12157171, -0.16832892, -1.31929740}, \

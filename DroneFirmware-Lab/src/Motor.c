@@ -133,6 +133,35 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		temp_pwm[2]=Motor->pwm[2];
 		temp_pwm[3]=Motor->pwm[3];
 
+		pthread_mutex_unlock(&(Motor->MotorLock));
+		//parsing data for motor
+		cmd[0]=0x20 | ((temp_pwm[0]&0x1ff)>>4);
+		cmd[1]=((temp_pwm[0]&0x1ff)<<4) | ((temp_pwm[1]&0x1ff)>>5);
+		cmd[2]=((temp_pwm[1]&0x1ff)<<3) | ((temp_pwm[2]&0x1ff)>>6);
+		cmd[3]=((temp_pwm[2]&0x1ff)<<2) | ((temp_pwm[3]&0x1ff)>>7);
+		cmd[4]=((temp_pwm[3]&0x1ff)<<1) ;
+
+		pthread_mutex_lock(&(Motor->MotorLock));
+		write(Motor->file,cmd,5);
+		pthread_mutex_unlock(&(Motor->MotorLock));
+
+							break;
+	case MOTOR_LED_ONLY :
+		pthread_mutex_lock(&(Motor->MotorLock));
+		temp_led[0]=Motor->led[0];
+		temp_led[1]=Motor->led[1];
+		temp_led[2]=Motor->led[2];
+		temp_led[3]=Motor->led[3];
+		pthread_mutex_unlock(&(Motor->MotorLock));
+
+							break;
+	case MOTOR_PWM_LED :
+		pthread_mutex_lock(&(Motor->MotorLock));
+		temp_pwm[0]=Motor->pwm[0];
+		temp_pwm[1]=Motor->pwm[1];
+		temp_pwm[2]=Motor->pwm[2];
+		temp_pwm[3]=Motor->pwm[3];
+
 		temp_led[0]=Motor->led[0];
 		temp_led[1]=Motor->led[1];
 		temp_led[2]=Motor->led[2];
@@ -149,10 +178,6 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		write(Motor->file,cmd,5);
 		pthread_mutex_unlock(&(Motor->MotorLock));
 
-							break;
-	case MOTOR_LED_ONLY :	/* A faire! */
-							break;
-	case MOTOR_PWM_LED :	/* A faire! */
 							break;
 	}
 }
