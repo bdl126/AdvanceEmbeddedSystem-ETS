@@ -117,6 +117,7 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 	uint16_t	temp_pwm[4]={0};
 	uint16_t	temp_led[4];
 	uint8_t 	cmd[5]={0};
+	uint8_t 	cmd_led[2]={0};
 
 
 	switch (SendMode) {
@@ -153,6 +154,12 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		temp_led[2]=Motor->led[2];
 		temp_led[3]=Motor->led[3];
 		pthread_mutex_unlock(&(Motor->MotorLock));
+		cmd_led[0]= 0x60 | ((temp_led[3]&0x0002)<<4) | ((temp_led[2]&0x0002)<<3) | ((temp_led[1]&0x0002)<<2) | ((temp_led[0]&0x0002)<<1) ;// pour le rouge
+		cmd_led[1]= ((temp_led[3]&0x0001)<<4) | ((temp_led[2]&0x0001)<<3) | ((temp_led[1]&0x0001)<<2) | ((temp_led[0]&0x0001)<<1) ;// pour le vert
+
+		pthread_mutex_lock(&(Motor->MotorLock));
+		write(Motor->file,cmd_led,2);
+		pthread_mutex_unlock(&(Motor->MotorLock));
 
 							break;
 	case MOTOR_PWM_LED :
@@ -168,14 +175,19 @@ void motor_send(MotorStruct *Motor, int SendMode) {
 		temp_led[3]=Motor->led[3];
 		pthread_mutex_unlock(&(Motor->MotorLock));
 		//parsing data for motor
+
 		cmd[0]=0x20 | ((temp_pwm[0]&0x1ff)>>4);
 		cmd[1]=((temp_pwm[0]&0x1ff)<<4) | ((temp_pwm[1]&0x1ff)>>5);
 		cmd[2]=((temp_pwm[1]&0x1ff)<<3) | ((temp_pwm[2]&0x1ff)>>6);
 		cmd[3]=((temp_pwm[2]&0x1ff)<<2) | ((temp_pwm[3]&0x1ff)>>7);
 		cmd[4]=((temp_pwm[3]&0x1ff)<<1) ;
 
+		cmd_led[0]= 0x60 | ((temp_led[3]&0x0002)<<4) | ((temp_led[2]&0x0002)<<3) | ((temp_led[1]&0x0002)<<2) | ((temp_led[0]&0x0002)<<1) ;// pour le rouge
+		cmd_led[1]= ((temp_led[3]&0x0001)<<4) | ((temp_led[2]&0x0001)<<3) | ((temp_led[1]&0x0001)<<2) | ((temp_led[0]&0x0001)<<1) ;// pour le vert
+		//printf("%s MOTOR_PWM_LED : led[0] %d\n", __FUNCTION__,temp_led[0]);
 		pthread_mutex_lock(&(Motor->MotorLock));
 		write(Motor->file,cmd,5);
+	//	write(Motor->file,cmd_led,2);
 		pthread_mutex_unlock(&(Motor->MotorLock));
 
 							break;
